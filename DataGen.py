@@ -3,7 +3,7 @@
 # "Error estimates for POD-DL-ROMs: a deep learning framework for reduced order
 #  modeling of nonlinear parametrized PDEs enhanced by proper orthogonal 
 #  decomposition" 
-# https://arxiv.org/abs/2305.04680
+# https://doi.org/10.1007/s10444-024-10110-1.
 #
 # -> Data generator <-
 # 
@@ -20,15 +20,35 @@ import utils
 
 
 
+
+
 class DataGen:
-    """
-    Data generator class: retains train, validation and test set
+    """ Data generator class: retains train, validation and test set
     """
 
-    def __init__(self, pod_dim = None, alpha_train = 0.8, rpod = True):
+    def __init__(
+        self, 
+        pod_dim : int = None, 
+        alpha_train :float = 0.8, 
+        rpod : bool = True
+    ):
+        """ 
+
+        Args:
+            pod_dim (int): the POD reduced dimension (defaults to None). If None
+                           the POD matrix and relative quantities are not 
+                           computed.
+            alpha_train (float): fraction of the data to allocate for training.
+                                 The rest is splitted among validation and test.
+                                 (defaults to 0.8).
+            rpod (bool): if True, we use randomized POD to compute the POD     
+                         matrix
+                
+        """
         self.pod_dim = pod_dim
         if self.pod_dim is not None:
             self.rpod = rpod
+        assert ((alpha_train > 0.0) and (alpha_train < 1.0))
         self.alpha_train = alpha_train
         self.data = dict()
         self.data['train'] = dict()
@@ -36,13 +56,25 @@ class DataGen:
         self.data['test'] = dict()
 
 
-    def read(self, 
-             filenames : dict, 
-             filenames_test = None, 
-             transpose = False, 
-             N_t = 1):
-        """
-        Reads data from given files
+
+    def read(
+        self, 
+        filenames : dict, 
+        filenames_test : dict = None, 
+        transpose : bool = False, 
+        N_t : int = 1
+    ):
+        """ Reads data from given files
+
+        Args:
+            filenames (dict): the filenames to read data from. 
+            filenames_test (dict): the (optional) test filenames (if test data 
+                                   are provided in a different file). (defaults
+                                   to None).
+            transpose (bool): if True, we transpose the read array (defaults to
+                              False).
+            N_t (int): The number of timesteps (must be equal for all samples, 
+                       defaults to 1).
         """
         self.N_t = N_t
         data = dict()
@@ -61,9 +93,13 @@ class DataGen:
             self.process(data, data_test)
     
 
-    def compute_pod_matrix(self, snapshot_matrix):
-        """
-        Computes the pod subspace matrix
+
+    def compute_pod_matrix(self, snapshot_matrix : np.array):
+        """ Computes the pod subspace matrix
+
+        Args:
+            snapshot_matrix (np.array): contains the matrix to compute the POD
+                                        subspace with.
         """
         if self.rpod == False:
             self.subspace, _, _ = svd(
@@ -79,16 +115,27 @@ class DataGen:
             )
     
 
+
     def pod_projection(self, snapshot_matrix):
-        """
-        Projects the snapshot matrix onto the reduced subspace
+        """ Projects the snapshot matrix onto the reduced subspace.
+
+        Args:
+            snapshot matrix: the matrix to reduce with POD.
+        
+        Return:
+            The POD coefficients.
         """
         return np.einsum('bi,ij->bj', snapshot_matrix, self.subspace)
     
 
+
     def process(self, data, data_test = None):
-        """
-        Processes the data (splitting, projection, normalization)
+        """ Backend function which processes the data 
+            (splitting, projection, normalization).
+        
+        Args:
+            data: the loaded data. 
+            data_test: the test data (if given in a different file).
         """
 
         n_samples = data['target'].shape[0]

@@ -3,7 +3,7 @@
 # "Error estimates for POD-DL-ROMs: a deep learning framework for reduced order
 #  modeling of nonlinear parametrized PDEs enhanced by proper orthogonal 
 #  decomposition" 
-# https://arxiv.org/abs/2305.04680
+# https://doi.org/10.1007/s10444-024-10110-1.
 #
 # -> Implementation of neural network models <-
 # 
